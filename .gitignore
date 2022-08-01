@@ -1,0 +1,6 @@
+__pycache__/
+bert-finetuned-sem_eval-english/
+bert_model/
+.ipynb_checkpoints/
+Movie_Summaries/
+IMDB_Ratings/
