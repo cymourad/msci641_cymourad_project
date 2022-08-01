@@ -45,3 +45,8 @@ def load_movies_full_df(movies_metadata_path, credits_path, n_votes, desired_col
 def get_index_to_movieId(df):
     indices = pd.Series(df.index, index=df['id']).drop_duplicates()
     return dict(zip(df.index, df.id))
+
+
+def get_distil_data(distil_data_path):
+    print("Loading the distilled data for the bert model ...")
+    return pd.read_csv(distil_data_path)

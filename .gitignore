@@ -4,3 +4,4 @@ bert_model/
 .ipynb_checkpoints/
 Movie_Summaries/
 IMDB_Ratings/
+sentence_embeddings.csv

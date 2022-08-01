@@ -23,3 +23,7 @@ Once we are done the project, we can remove it form the list of jupyter kernels.
 ```
 jupyter-kernelspec uninstall msci641-env
 ```
+
+## Data
+
+The data is too large to be uploaded onto GitHub. To get around that, I distilled the data that I actually need into `data/distil_data.csv`
