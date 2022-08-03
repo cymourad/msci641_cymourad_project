@@ -1,5 +1,5 @@
 from data_prep import load_movies_full_df, get_index_to_movieId
-from bow import get_lemmatized_tfidf_matrix
+from overview_processing import get_lemmatized_tfidf_matrix
 from features import get_features, get_feature_count_matrix
 from similarity import get_cosine_sim_matrix
 from test import load_testing_set, test_recommendations

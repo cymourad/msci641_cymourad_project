@@ -23,7 +23,10 @@ device = torch.device(
     "cuda") if torch.cuda.is_available() else torch.device("cpu")
 N_EPOCHS = 5
 PATH_TO_MODEL_PICKELING_DIRECTORY = './bert_model'
-SENTENCE_EMBEDDING_FILE = 'sentence_embeddings.csv'
+X_LAST_LAYER_TO_EXTRACT_EMBED_FROM = 1
+SENTENCE_EMBEDDING_FILE = f'sentence_embeddings_{X_LAST_LAYER_TO_EXTRACT_EMBED_FROM}.csv'
+print(
+    f'Sentence embeddings from the {X_LAST_LAYER_TO_EXTRACT_EMBED_FROM} last year will be saved to {SENTENCE_EMBEDDING_FILE}')
 
 # load the data
 df = get_distil_data('data/distil_data.csv')
@@ -156,33 +159,34 @@ if not os.path.exists(PATH_TO_MODEL_PICKELING_DIRECTORY):
         learning_rate=2e-5,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
-        num_train_epochs=5,
+        num_train_epochs=N_EPOCHS,
         weight_decay=0.01,
         load_best_model_at_end=True,
-        metric_for_best_model=metric_name,
+        # metric_for_best_model=metric_name,
         # push_to_hub=True,
     )
 
     # source: https://jesusleal.io/2021/04/21/Longformer-multilabel-classification/
 
     def multi_label_metrics(predictions, labels, threshold=0.5):
-        # first, apply sigmoid on predictions which are of shape (batch_size, num_labels)
-        sigmoid = torch.nn.Sigmoid()
-        probs = sigmoid(torch.Tensor(predictions))
-        # next, use threshold to turn them into integer predictions
-        y_pred = np.zeros(probs.shape)
-        y_pred[np.where(probs >= threshold)] = 1
-        # finally, compute metrics
-        y_true = labels
-        f1_micro_average = f1_score(
-            y_true=y_true, y_pred=y_pred, average='micro')
-        roc_auc = roc_auc_score(y_true, y_pred, average='micro')
-        accuracy = accuracy_score(y_true, y_pred)
-        # return as dictionary
-        metrics = {'f1': f1_micro_average,
-                   'roc_auc': roc_auc,
-                   'accuracy': accuracy}
-        return metrics
+        with torch.no_grad():
+            # first, apply sigmoid on predictions which are of shape (batch_size, num_labels)
+            sigmoid = torch.nn.Sigmoid()
+            probs = sigmoid(torch.Tensor(predictions))
+            # next, use threshold to turn them into integer predictions
+            y_pred = np.zeros(probs.shape)
+            y_pred[np.where(probs >= threshold)] = 1
+            # finally, compute metrics
+            y_true = labels
+            f1_micro_average = f1_score(
+                y_true=y_true, y_pred=y_pred, average='micro')
+            roc_auc = roc_auc_score(y_true, y_pred, average='micro')
+            accuracy = accuracy_score(y_true, y_pred)
+            # return as dictionary
+            metrics = {'f1': f1_micro_average,
+                       'roc_auc': roc_auc,
+                       'accuracy': accuracy}
+            return metrics
 
     def compute_metrics(p: EvalPrediction):
         preds = p.predictions[0] if isinstance(p.predictions,
@@ -203,7 +207,7 @@ if not os.path.exists(PATH_TO_MODEL_PICKELING_DIRECTORY):
         train_dataset=encoded_dataset["train"],
         eval_dataset=encoded_dataset["test"],
         tokenizer=tokenizer,
-        compute_metrics=compute_metrics
+        compute_metrics=None
     )
 
     print('Starting training ...')
@@ -250,7 +254,7 @@ with torch.no_grad():
 
             # get the features in the last layer
             # TODO is it better to get the features in the second last layer [-2] than the last layer [-1]
-            last_layer = outputs.hidden_states[-2]
+            last_layer = outputs.hidden_states[-X_LAST_LAYER_TO_EXTRACT_EMBED_FROM]
 
             # to get the representation of a sentence, combine all the words embeddings (by averaging them) to become a single sentence embedding
             # in other words, we want to get rid of the middle dimension (the <SENTENCE_LENGTH> dimension), which is at index 1 of the shape
