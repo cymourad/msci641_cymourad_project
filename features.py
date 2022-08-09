@@ -68,14 +68,21 @@ def join_features(x, features=['cast', 'genres', 'director', 'production_compani
     return joined_features
 
 
-def get_features(df, features_names, feature_and_n):
+def get_features(df, features_names, feature_and_n, features_in_soup=['cast', 'genres', 'director', 'production_companies'], make_soup=True):
     print('Preparing features ...')
 
     df = parse_into_python_objects(df, features_names)
     df['director'] = get_director_from_crew(df['crew'])
     df = get_top_n_per_feature(df, feature_and_n)
 
-    return df.apply(join_features, axis=1)
+    if make_soup:
+        return df.apply(join_features, args=(features_in_soup,), axis=1)
+    else:
+        return df
+
+
+def make_soup(df, features_in_soup=['cast', 'genres', 'director', 'production_companies']):
+    return df.apply(join_features, args=(features_in_soup,), axis=1)
 
 
 def get_feature_count_matrix(features):
